@@ -93,11 +93,11 @@ function average_over_neighbors(grid::Array{Node},i,j,a)
     =#
 
 
-    return 1/4a^2*(grid[i-1,j].potential+grid[i+1,j].potential+grid[i,j-1].potential+grid[i,j+1].potential)
+    return 1/4*(grid[i-1,j].potential+grid[i+1,j].potential+grid[i,j-1].potential+grid[i,j+1].potential)
 
 end 
 
-function relax(lattice::Lattice,L::Real,n_grids::Integer)
+function relax!(lattice::Lattice,L::Real,n_grids::Integer)
 
     #=
 
@@ -117,26 +117,28 @@ function relax(lattice::Lattice,L::Real,n_grids::Integer)
 
 end 
 
-# function relax_dont(lattice::Lattice,trials::Real)
+function relax_dont_do_it(lattice::Lattice,trials::Real)
 
-#     #=
+    #=
 
-#     =#
+    =#
 
-#     Δ=0
-#     while Δ<trials  
-#         # @show  Δ
-#         relax(lattice) 
-#         # @show lattice.lattice_grid
-#         Δ=Δ+1
-#     end
-# end 
+    Δ=0
+    while Δ<trials  
+        # @show  Δ
+        relax!(lattice) 
+        # @show lattice.lattice_grid
+        Δ=Δ+1
+    end
+end 
 
 function topographical_map(lattice::Lattice)
 
     z_data=[node.potential for node in lattice.lattice_grid[2:end-1,2:end-1]]
 
     return surface(
+        x=[node.x_ for node in lattice.lattice_grid[2:end-1,2:end-1]],
+        y=[node.y_ for node in lattice.lattice_grid[2:end-1,2:end-1]],
         z=z_data,
         contours_z=attr(
             show=true,
@@ -155,12 +157,12 @@ function animate(lattice::Lattice,trials::Integer,n_grids::Integer)
     frames  = Vector{PlotlyFrame}(undef, n_frames)
     for k in 1:n_frames
         # @show  Δ
-        relax(lattice,lattice.length,n_grids) 
+        relax!(lattice,lattice.length,n_grids) 
         frames[k]=frame(data=(attr(z=[node.potential for node in lattice.lattice_grid[2:end-1,2:end-1]])),
         layout=attr(title_text="Iteration $k"), #update title
-        name="fr$k", #frame name; it is passed to slider 
-        traces=[0] # this means that the above data update the first trace (here the unique one) 
-        ) 
+        name="fr$k", #frame name; it is passed to slider  
+        # this means that the above data update the first trace (here the unique one) 
+        traces=[0]) 
     end
 
 
@@ -204,17 +206,42 @@ function animate(lattice::Lattice,trials::Integer,n_grids::Integer)
 end
 
 
-function estimate_error(lattice::Lattice)
-  @show 
-end 
+# function estimate_error(lattice::Lattice)
+#   @show 
+# end 
 
-function main(length,n_grids,intitial_potential, trials)
+# function main(length,n_grids,intitial_potential, trials)
 
-    lattice=make_lattice_node(length,n_grids,intitial_potential)
-    animate(lattice,trials)
+#     lattice=make_lattice_node(length,n_grids,intitial_potential)
+#     animate(lattice,trials)
 
-end 
-
-
+# end 
 
 
+# frame = 1
+
+# trace = topographical_map(lattice)
+# n_frames = trials
+# frames  = Vector{PlotlyFrame}(undef, n_frames)
+
+
+length=1000
+n_grids=100
+potential=100
+# latt=make_lattice_node(length,n_grids,potential)
+# trace=topographical_map(latt)
+# plt=plot(trace)
+# for k in 1:n_frames
+#     # @show  Δ
+#     relax!(latt,latt.length,n_grids) 
+#     react!(plt,trace,layout)
+# end
+
+
+latt=make_lattice_node(length,n_grids,potential)
+
+@animate for i ∈ 1:n
+
+    plot(topographical_map(latt))
+    relax!(latt,length, n_grids)
+end
