@@ -13,8 +13,7 @@ A package to solve some 1 or 2-dimensional relaxation problems, plot the solutio
 
   Laplace and Poisson Equation: 
 
-    $$ \nabla^{2} $$
-
+  $$\nabla^{2}$$
 
   Place of this simulation 
 
