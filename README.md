@@ -13,12 +13,9 @@ A package to solve some 1 or 2-dimensional relaxation problems, plot the solutio
 
   Laplace and Poisson Equation: 
 
-<<<<<<< HEAD
-  $$ \mathbf{\nabla} \cdot \mathbf{E} $$
+$$ \mathbf{\nabla} \cdot \mathbf{E} $$
 
-=======
-  $$\nabla^{2}$$
->>>>>>> 464dc82a8bd5db509c6eac0b77176ac6141c0908
+ $$\nabla^{2}$$
 
   $$ \nabla^{2}\phi(r,\theta,\Phi)=\rho(r,\theta,\Phi)/\epsilon $$
 
