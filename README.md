@@ -13,9 +13,11 @@ A package to solve some 1 or 2-dimensional relaxation problems, plot the solutio
 
   Laplace and Poisson Equation: 
 
-    $$ \nabla^{2} $$
+  $$ \mathbf{\nabla} \cdot \mathbf{E} $$
 
 
-  Place of this simulation 
+  $$ \nabla^{2}\phi(r,\theta,\Phi)=\rho(r,\theta,\Phi)/\epsilon $$
+
+Place of this simulation 
 
 
