@@ -5,6 +5,12 @@ Date:
     Created: 
     Modified: 
 Description: 
+
+TODO: 
+
+1. optimize iterating, recrate iteration space
+2. do error analysis 
+
 =#
 
 using PlotlyJS
@@ -60,23 +66,6 @@ function checkifedge(x::Number,y::Number,L::Number)
     end 
     return false
 end 
-
-# function checkifedge(x,y,L)
-
-#     #=
-
-#     =#
-
-#     if (x>=0 || x<=L) && (y>=0 && y<=L)
-#         if (x==L || x==0 || y==L || y==0) || (x>L/2 && y<L/2)
-#             return true 
-#         else 
-#             return false 
-#         end 
-#     else 
-#         return false 
-#     end 
-# end 
 
 function make_lattice_node(L::Int,n_grids::Int,initial_potential::Number)
 
@@ -148,7 +137,7 @@ function relax(lattice::Lattice)::Lattice
 
 end 
 
-function estimate_potential(lattice::Lattice,tolerance::Number,max_trials::Int=10000000)
+function estimate_potential(lattice::Lattice,tolerance::Number,max_trials::Int=10000)
 
     #=
 
@@ -156,12 +145,15 @@ function estimate_potential(lattice::Lattice,tolerance::Number,max_trials::Int=1
 
     Δ=0
     t=0
-    while Δ<tolerance && t<max_trials 
-        L2_0=L2_norm([node.potential for node in lattice.lattice_grid[2:end-1,2:end-1]])
+    L2_0=L2_norm([node.potential for node in lattice.lattice_grid[2:end-1,2:end-1]])
+    @show L2_0, max_trials
+    while Δ>tolerance || t<max_trials 
         relax!(lattice) 
         L2_1=L2_norm([node.potential for node in lattice.lattice_grid[2:end-1,2:end-1]])
-        Δ=L2_1/L2_0
-        t=t+1
+        @show (L2_1-L2_0)
+        Δ=(L2_1-L2_0)/L2_0
+        @show Δ
+        t+=1
     end
 end 
 
@@ -171,15 +163,18 @@ function estimate_potential_point(lattice::Lattice,tolerance::Number,x::Number,y
 
     =#
 
-    Δ=0
-    t=0
-    while Δ<tolerance && t<max_trials 
-        L2_0=L2_norm([node.potential for node in lattice.lattice_grid[2:end-1,2:end-1]])
-        relax!(lattice) 
-        L2_1=L2_norm([node.potential for node in lattice.lattice_grid[2:end-1,2:end-1]])
-        Δ=L2_1/L2_0
-        t=t+1
-    end
+    if (x<0 || x>lattice.length) && (y<0 || y>lattice.length)
+        print("Coordinates $(x,y) are not in interval of the lattice")
+        exit(1)
+    end 
+
+    estimate_potential(lattice,tolerance)
+    for node in lattice.lattice_grid[2:end-1,2:end-1]
+        if node.x_==x && node.y_==y
+            return node.potential 
+        end 
+    end 
+        
 end 
 
 function topographical_map(lattice::Lattice)
@@ -254,34 +249,75 @@ function animate_realtime(lattice::Lattice,trials::Integer)
 
 end
 
-function animate_save(lattice::Lattice,n_frames::Int64)
+function animate_save(lattice::Lattice,n_frames::Int64,video_name::String, video_type::String,fps::Integer)
 
     fig = Plot(topographical_map(lattice), 
-           PlotlyJS.Layout(title_text="x", title_x=0.5,
-                width=700, height=500,
+           PlotlyJS.Layout(title_text="Finding Pontential Via Relaxation", title_x=0.5,
+                width=100, height=100,
                 scene=attr(xaxis_range=[0, lattice.length], 
-                yaxis_range=[0, lattice.length]),))
+                yaxis_range=[0, lattice.length])))
+
+    camera = attr(
+                    eye=attr(x=-2, y=-1, z=0.1)
+                )
+
+    relayout!(fig, scene_camera=camera)
+
 
     fnames=String[]
     for k in 1:n_frames
         relax!(lattice) 
-        update(fig, Dict(:z=>[[node.potential for node in lattice.lattice_grid[2:end-1,2:end-1]]]),
+        update!(fig, Dict(:z=>[[node.potential for node in lattice.lattice_grid[2:end-1,2:end-1]]]),
         layout=PlotlyJS.Layout(title_text="Iteration $k"))
         filename=lpad(k, 6, "0")*".png"
         push!(fnames, filename)
-        PlotlyJS.savefig(fig,"/tmp/"*filename, width=700, height=500, scale=1) #tmp, a folder where the frames are saved
+        PlotlyJS.savefig(fig,"/tmp/"*filename, width=1000, height=1000, scale=1) #tmp, a folder where the frames are saved
     end
     anim = Plots.Animation("/tmp", fnames)
-    Plots.buildanimation(anim, "your.gif", fps = 12, show_msg=false)
-    #or Plots.buildanimation(anim, "your.mp4", fps = 12, show_msg=false)  
+
+    if video_type=="gif"
+        Plots.buildanimation(anim, "$video_name.gif", fps = fps, show_msg=false)
+    elseif video_type=="mp4"
+        Plots.buildanimation(anim, "$video_name.mp4", fps = fps, show_msg=false)  
+    else 
+        print("ERROR: Choose either mp4 or gif format")
+    end 
+
     for file in fnames
         rm("/tmp/"*file)
     end 
 
 end 
 
-function main()
 
-    
+function convergence_error_estimate()
+
+    #=
+
+    =#
+
+
+
+end 
+
+function discretization_error_estimate()
+
+     #=
+
+    =#
+
+
+
+end 
+
+function potential_error_estimate()
+
+     #=
+
+    =#
+
+end 
+
+function main()
 
 end 

@@ -1,27 +1,27 @@
 # ElectrostaticRelaxation.jl
-A package to solve some 1 or 2-dimensional relaxation problems, plot the solutions , and produce animations. 
+A package to solve 1, 2, or 3-dimensional electrostatic relaxation problems. 
 
-  ## An Introduction to Laplace's Equation in Context of Electrostatics
+The physical problem is to solve for the potential within a volume or (surface, or line) given the potential on the boundary of the volume (or surface or line).
 
-  Electrostatics, as the name suggests, is that theory dealing with the properties of a stationary source charge, or bundle of charges, and its effects on a (moving or non-moving) target charge , or bundle of charges. Since basically no charge , or swarm of them, is really ever at rest, electrostatics is an idealization, something thought of to model natural phenomenon in a simple way, but a theory which is not ,maximally realistic. That being said a great deal of natural phenomenon can be modelled via electrostatics. 
+The mathematical problem is to solve for laplace's equation for volume V : 
 
-  Coloumb: The beginning of electrostatics is Coloumb's law. 
+$$ \nabla^{2}\phi(\textbf{r})=0 $$
 
-  Gauss: 
+Given boundary condition: 
 
-  Potentials:
+$$ \phi(\textbf{r})=0 $$
 
-  Laplace and Poisson Equation: 
+# Electrostatics 
 
-<<<<<<< HEAD
-  $$ \mathbf{\nabla} \cdot \mathbf{E} $$
+Electrostatics is the theory, and study of, the features of **stationary charges** (or groups of charges). The canonical computational problem is to calculate the effect of the stationary charge , or distribution of charge, on a target charge , or distribution of charge i.e. to calculate the force of the source charge (or distribution) on the target charge (or distribution). 
 
-=======
-  $$\nabla^{2}$$
->>>>>>> 464dc82a8bd5db509c6eac0b77176ac6141c0908
+The first 
 
-  $$ \nabla^{2}\phi(r,\theta,\Phi)=\rho(r,\theta,\Phi)/\epsilon $$
+## Coloumb's and Gauss's Law
 
-Place of this simulation 
+## Deriving Poisson's and Laplace's Law 
 
+## Numerica Solutions to Laplace's Law 
+
+## This "package" 
 

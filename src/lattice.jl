@@ -7,175 +7,87 @@ Date:
 Description: 
 =#
 
-using Images 
+mutable struct Node{I<:Number,T<:Number}
 
-mutable struct Node 
+    #=
 
-    x_::Real
-    y_::Real
-    potential::Real
+    =#
+
+    x_::I
+    y_::I
+    potential::T
     edge_flag::Bool ## if 1 then the node is on an edge
-    adjacency_list::Array{Array{Real,1}}
+    # adjacency_list::Array{Real,1}
 
 end 
 
-mutable struct Lattice
+struct Lattice{I<:Int,X_Y<:Number,T<:Number}
 
      #=
 
     =#
 
-    length::Integer
-    n_grids::Integer 
-    lattice_grid::Array{Node}
+    length::I
+    n_grids::I 
+    lattice_grid::Array{Node{X_Y,T}}
 end 
 
-# number-> √number* √number==number ? true : return false 
+∑(arr)=sum(arr)
+L2_norm(arr)=√sum([x^2 for x in arr])
 
-function checkperfsquare(number::Integer)
+function checkperfsquare(number::Number)
 
      #=
 
     =#
 
-    if √number* √number==number 
-        return true 
-    else 
-        return false
+    return (floor(√number)^2==number)
+end 
+
+function checkifedge(x::Number,y::Number,L::Number)
+
+    #=
+
+    =#
+
+    if (x>=0 || x<=L) && (y>=0 && y<=L)
+        return (x==L || x==0 || y==L || y==0) || (x>L/2 && y<L/2)
     end 
+    return false
 end 
 
+# function checkifedge(x,y,L)
 
-function make_lattice(lattice::Lattice,L::Integer,n_grids::Integer)
+#     #=
 
-    #=
+#     =#
 
-   =#
+#     if (x>=0 || x<=L) && (y>=0 && y<=L)
+#         if (x==L || x==0 || y==L || y==0) || (x>L/2 && y<L/2)
+#             return true 
+#         else 
+#             return false 
+#         end 
+#     else 
+#         return false 
+#     end 
+# end 
 
-
-   initial_potential=0
-   four_flag=1
-   if lattice.n_grids>0 && checkperfsquare(lattice.n_grids) 
-       nsquare=√lattice.n_grids
-       L=lattice.length
-       lattice_piece1=[[x,y,initial_potential,four_flag] for x=0:1/nsquare:L/2,y=0:1/nsquare:L]
-       lattice_piece2=[[x,y,initial_potential,four_flag] for x=L/2:1/nsquare:L,y=L/2:1/nsquare:L]
-       return lattice.lattice_grid=[lattice_piece1 lattice_piece2]
-   else 
-       error("Use integer which is a perfect square\n")
-       return 0
-   end 
-end 
-
-
-function make_lattice(lattice::Lattice,L::Integer,n_grids::Integer)
-
-    #=
-
-   =#
-
-
-   initial_potential=0
-   four_flag=1
-   if lattice.n_grids>0 && checkperfsquare(lattice.n_grids) 
-       nsquare=√lattice.n_grids
-       L=lattice.length
-       lattice_piece1=[[x,y,initial_potential,four_flag] for x=0:1/nsquare:L/2,y=0:1/nsquare:L]
-       lattice_piece2=[[x,y,initial_potential,four_flag] for x=L/2:1/nsquare:L,y=L/2:1/nsquare:L]
-       return lattice.lattice_grid=[lattice_piece1 lattice_piece2]
-   else 
-       error("Use integer which is a perfect square\n")
-       return 0
-   end 
-end 
-
-function make_lattice_node(L::Integer,n_grids::Integer,initial_potential)
+function make_lattice_node(L::Int,n_grids::Int,initial_potential::Number)
 
     #=
 
    =#
 
    default_potential=0
-   default_edge_case=0
-   lattice=Lattice(L,n_grids,[])
-   if lattice.n_grids>0 && checkperfsquare(lattice.n_grids) 
-       nsquare=√lattice.n_grids
-       L=lattice.length
-       step=1/nsquare
-       lattice_piece1=[Node(x,y,default_potential,default_edge_case,Array{Real}) for x=0:step:L/2+step,y=0:step:L+step]
-       lattice_piece2=[Node(x,y,default_potential,default_edge_case,Array{Real}) for x=L/2:step:L+step,y=L/2:step:L+step]
-       return lattice.lattice_grid=[lattice_piece1 lattice_piece2]
+   if n_grids>0 && checkperfsquare(n_grids) 
+    #    nsquare=√n_grids
+       incre=L/√n_grids
+       lattice_grid=[y==L ? Node{Float64,Float64}(x,y,initial_potential,checkifedge(x,y,L)) : Node{Float64,Float64}(x,y,default_potential,checkifedge(x,y,L)) for x=0-incre:incre:L+incre,y=0-incre:incre:L+incre]
+       return Lattice{Int64,Float64,Float64}(L,n_grids,lattice_grid)
+
    else 
        error("Use integer which is a perfect square\n")
        return 0
    end 
-end 
-
-
-function define_lattice(lattice::Lattice,ϕ::Real)
-
-    #=
-
-    =#
-
-    y_component=lattice.length
-    coordinate=1
-    potential=3
-    for i in lattice.lattice_grid
-        if lattice.lattice_grid[i][coordinate][y_component]==y_component
-            lattice.lattice_grid[i][potential]==ϕ
-        else 
-            continue 
-        end 
-    end 
-end 
-
-
-
-function neighbor_seek_n_link(lattice::Lattice)
-    
-    adjacency_list=4
-    three_flag=0
-    coordinate=1
-    flag_position=4
-    m,n=size(lattice.lattice_grid)
-    for i=0:m, j=0:n
-        if lattice.length ∈ lattice.lattice_grid[i,j][coordinate] 
-
-            lattice.lattice_grid[i,j][coordinate][flag_position]
-        end
-
-            ## interior element 
-
-
-
-
-    end 
-
-   
-
-end 
-
-function neighbor_seek_n_link(lattice::Lattice)
-    
-    adjacency_list=4
-    three_flag=0
-    coordinate=1
-    flag_position=4
-    x_coordinate=1
-    y_coordinate=2
-    m,n=size(lattice.lattice_grid)
-    for i=0:m, j=0:n
-
-        ## literal edge cases
-
-        ## on border 
-        if lattice.length ∈ lattice.lattice_grid[i,j][coordinate] 
-            ## on the corner 
-        else 
-            ## interior element
-            push!(lattice.lattice_grid[i,j][adjacency_list],(i-1,j),(i+1,j),(i,j-1),(i,j+1))
-
-    end   
-
 end 
