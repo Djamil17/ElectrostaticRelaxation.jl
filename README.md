@@ -13,9 +13,9 @@ $$ \phi(\textbf{r})=0 $$
 
 # Electrostatics 
 
-Electrostatics is the theory, and study of, the features of **stationary charges** (or groups of charges). The canonical computational problem is to calculate the effect of the stationary charge , or distribution of charge, on a target charge , or distribution of charge i.e. to calculate the force of the source charge (or distribution) on the target charge (or distribution). 
+Electrostatics is the theory, and study of, the features of **stationary charges** (or groups of charges). The **first** computational problem is to calculate the effect of the stationary charge , or distribution of charge, on a target charge , or distribution of charge i.e. to calculate the force of the source charge (or distribution) on the target charge (or distribution). 
 
-The first 
+The start of  
 
 ## Coloumb's and Gauss's Law
 
@@ -25,3 +25,8 @@ The first
 
 ## This "package" 
 
+$$ \mathbf{\nabla} \cdot \mathbf{E} $$
+
+ $$\nabla^{2}$$
+
+  $$ \nabla^{2}\phi(r,\theta,\Phi)=\rho(r,\theta,\Phi)/\epsilon $$
