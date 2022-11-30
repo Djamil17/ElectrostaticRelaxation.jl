@@ -5,6 +5,12 @@ Date:
     Created: 
     Modified: 
 Description: 
+
+TODO: 
+
+1. optimize iterating, recreate iteration space
+2. collate mesh and pointwise methods into a single dictating function 
+3. do error analysis pointwise and aggregate
 =#
 
 using PlotlyJS
@@ -24,13 +30,13 @@ mutable struct Node{I<:Number,T<:Number}
 
 end 
 
-struct Lattice{I<:Int,X_Y<:Number,T<:Number}
+struct Lattice{T<:Number,I<:Int,X_Y<:Number}
 
      #=
 
     =#
 
-    length::I
+    length::T
     n_grids::I 
     lattice_grid::Array{Node{X_Y,T}}
 end 
@@ -39,6 +45,8 @@ end
 
 ∑(arr)=sum(arr)
 L2_norm(arr)=√sum([x^2 for x in arr])
+mean_diff(arr)=sum(arr)/size(arr)
+
 
 function checkperfsquare(number::Number)
 
@@ -61,24 +69,7 @@ function checkifedge(x::Number,y::Number,L::Number)
     return false
 end 
 
-# function checkifedge(x,y,L)
-
-#     #=
-
-#     =#
-
-#     if (x>=0 || x<=L) && (y>=0 && y<=L)
-#         if (x==L || x==0 || y==L || y==0) || (x>L/2 && y<L/2)
-#             return true 
-#         else 
-#             return false 
-#         end 
-#     else 
-#         return false 
-#     end 
-# end 
-
-function make_lattice_node(L::Int,n_grids::Int,initial_potential::Number)
+function potential_meshgrid(L::Int,n_grids::Int,initial_potential::Number)
 
     #=
 
@@ -89,7 +80,7 @@ function make_lattice_node(L::Int,n_grids::Int,initial_potential::Number)
     #    nsquare=√n_grids
        incre=L/√n_grids
        lattice_grid=[y==L ? Node{Float64,Float64}(x,y,initial_potential,checkifedge(x,y,L)) : Node{Float64,Float64}(x,y,default_potential,checkifedge(x,y,L)) for x=0-incre:incre:L+incre,y=0-incre:incre:L+incre]
-       return Lattice{Int64,Float64,Float64}(L,n_grids,lattice_grid)
+       return Lattice{Float64,Int64,Float64}(L,n_grids,lattice_grid)
 
    else 
        error("Use integer which is a perfect square\n")
@@ -148,39 +139,139 @@ function relax(lattice::Lattice)::Lattice
 
 end 
 
-function estimate_potential(lattice::Lattice,tolerance::Number,max_trials::Int=10000000)
+
+function estimate_mesh_potential_L2(lattice::Lattice,tolerance::Number,max_trials::Int=10000,error_analysis::Bool=true)
 
     #=
 
     =#
 
-    Δ=0
     t=0
-    while Δ<tolerance && t<max_trials 
+    Δ=tolerance+1
+    while Δ>tolerance 
         L2_0=L2_norm([node.potential for node in lattice.lattice_grid[2:end-1,2:end-1]])
         relax!(lattice) 
         L2_1=L2_norm([node.potential for node in lattice.lattice_grid[2:end-1,2:end-1]])
-        Δ=L2_1/L2_0
-        t=t+1
+        Δ=(L2_1-L2_0)/L2_0
+        # @show Δ
+        if error_analysis==true
+            error_sum+=Δ
+        end 
+        t+=1
+        if t==max_trials 
+            print("max trials admitted")
+            break 
+        end 
     end
+
+    if error_analysis==true
+        return error_sum/t
+    end 
+
 end 
 
-function estimate_potential_point(lattice::Lattice,tolerance::Number,x::Number,y::Number,max_trials::Int=10000000)
+function estimate_mesh_potential_mean_diff(lattice::Lattice,tolerance::Number,max_trials::Int=10000,error_analysis::Bool=true)
 
     #=
 
     =#
 
-    Δ=0
     t=0
-    while Δ<tolerance && t<max_trials 
-        L2_0=L2_norm([node.potential for node in lattice.lattice_grid[2:end-1,2:end-1]])
+    Δ=tolerance+1
+    while Δ>tolerance 
+
+      
+        mean_0=mean_diff([node.potential for node in lattice.lattice_grid[2:end-1,2:end-1]])
         relax!(lattice) 
-        L2_1=L2_norm([node.potential for node in lattice.lattice_grid[2:end-1,2:end-1]])
-        Δ=L2_1/L2_0
-        t=t+1
+        mean_1=L2_norm([node.potential for node in lattice.lattice_grid[2:end-1,2:end-1]])
+        Δ=(mean_1-mean_0)/mean_0
+        if error_analysis==true
+            error_sum+=Δ
+        end 
+        # @show Δ
+        t+=1
+        if t==max_trials 
+            print("max trials admitted")
+            break 
+        end 
     end
+
+    if error_analysis==true
+        return error_sum/t
+    end 
 end 
+
+
+function estimate_pointwise_potential_L2(lattice::Lattice,tolerance::Number,x::Number,y::Number,max_trials::Int=10000000)::Number
+
+    #=
+
+    =#
+
+    if (x<0 || x>lattice.length) && (y<0 || y>lattice.length)
+        print("Coordinates ($x,$y) are not in interval of the lattice")
+        exit(1)
+    end 
+
+    estimate_mesh_potential_L2(lattice,tolerance,max_trials)
+    for node in lattice.lattice_grid[2:end-1,2:end-1]
+        if node.x_==x && node.y_==y
+            return node.potential 
+        end 
+    end 
+        
+end 
+
+function estimate_pointwise_potential_diff(lattice::Lattice,percent_error::Number,x::Number,y::Number,max_trials::Int=10000000,waittime::Int=5)::Number
+
+    #=
+
+         estimate_pointwise_potential_diff((lattice::Lattice,percent_error::Number,x::Number,y::Number,max_trials::Int=10000000,waittime::Int=5)::Number
+
+    Compute the potential of a single point in the lattice grid. The algorithm is iterative and continues until the difference bewteen value of iteration t and 
+    t+1 is less than a certain percent percent i.e. (val(t)-val(t+1))/val*100 < percent
+
+    # Examples
+    ```julia-repl
+    julia> estimate_pointwise_potential_diff(lattice, 1,0.75 ,0.75)
+
+    ```
+    =#
+
+    if (x<0 || x>lattice.length) && (y<0 || y>lattice.length)
+        error("Coordinates ($x,$y) are not in interval of the lattice") 
+    end 
+
+    error_val=percent_error+1
+    zero_offset=.00000000001
+    tmp=0.0
+    node_potential=0.0
+    while error_val>percent_error
+        for node in lattice.lattice_grid[2:end-1,2:end-1]
+            if node.x_==x && node.y_==y
+                tmp=node.potential
+                # @show tmp
+                break
+            end 
+        end
+        ## This loop exists to prevent tmp being zero so that the error value at beginning is 0%
+        i=0
+        while i<waittime
+            relax!(lattice)
+            i+=1
+        end 
+        for node in lattice.lattice_grid[2:end-1,2:end-1]
+            if node.x_==x && node.y_==y
+                node_potential=node.potential
+                error_val=(node.potential-tmp)/(tmp+zero_offset)*100
+                # @show error_val
+            end 
+        end
+    end 
+    return node_potential
+end 
+ 
+
 
 function topographical_map(lattice::Lattice)
     z_data=[node.potential for node in lattice.lattice_grid[2:end-1,2:end-1]]
@@ -254,34 +345,84 @@ function animate_realtime(lattice::Lattice,trials::Integer)
 
 end
 
-function animate_save(lattice::Lattice,n_frames::Int64)
+function animate_save(lattice::Lattice,n_frames::Int64,video_name::String, video_type::String,fps::Integer)
 
     fig = Plot(topographical_map(lattice), 
            PlotlyJS.Layout(title_text="Finding Pontential Via Relaxation", title_x=0.5,
                 width=100, height=100,
                 scene=attr(xaxis_range=[0, lattice.length], 
-                yaxis_range=[0, lattice.length]),))
+                yaxis_range=[0, lattice.length])))
+
+    camera = attr(
+                    eye=attr(x=-2, y=-1, z=0.1)
+                )
+
+    relayout!(fig, scene_camera=camera)
+
 
     fnames=String[]
     for k in 1:n_frames
         relax!(lattice) 
-        update(fig, Dict(:z=>[[node.potential for node in lattice.lattice_grid[2:end-1,2:end-1]]]),
+        update!(fig, Dict(:z=>[[node.potential for node in lattice.lattice_grid[2:end-1,2:end-1]]]),
         layout=PlotlyJS.Layout(title_text="Iteration $k"))
         filename=lpad(k, 6, "0")*".png"
         push!(fnames, filename)
         PlotlyJS.savefig(fig,"/tmp/"*filename, width=1000, height=1000, scale=1) #tmp, a folder where the frames are saved
     end
     anim = Plots.Animation("/tmp", fnames)
-    # Plots.buildanimation(anim, "your.gif", fps = 12, show_msg=false)
-    Plots.buildanimation(anim, "your.mp4", fps = 2, show_msg=false)  
+
+    if video_type=="gif"
+        Plots.buildanimation(anim, "$video_name.gif", fps = fps, show_msg=false)
+    elseif video_type=="mp4"
+        Plots.buildanimation(anim, "$video_name.mp4", fps = fps, show_msg=false)  
+    else 
+        print("ERROR: Choose either mp4 or gif format")
+    end 
+
     for file in fnames
         rm("/tmp/"*file)
     end 
 
 end 
 
-function main()
+function main(L::Number==1, ϕ::Number==1,ngrid::Number=16)
 
-    
+    ## initialize different meshes 
+
+    ## for aggregates 
+
+    ## for mean diff
+    lattice_low_grain0=potential_meshgrid(L,ngrid,ϕ)
+    lattice_mid_grain0=potential_meshgrid(L,ngrid*4,ϕ)
+    lattice_fine_grain0=potential_meshgrid(L,ngrd*64,ϕ)
+
+    ## for l2 norm 
+    lattice_low_grain1=potential_meshgrid(L,ngrid,ϕ)
+    lattice_mid_grain1=potential_meshgrid(L,ngrid*4,ϕ)
+    lattice_fine_grain1=potential_meshgrid(L,ngrd*64,ϕ)
+
+    ## for pointwise 
+    lattice_low_grain2=potential_meshgrid(L,ngrid,ϕ)
+    lattice_mid_grain2=potential_meshgrid(L,ngrid*4,ϕ)
+    lattice_fine_grain2=potential_meshgrid(L,ngrd*64,ϕ)
+
+    # test aggregate measure of error mean diff and L2_0
+
+    estimate_mesh_potential_mean_diff(lattice_low_grain0,1e-12)
+    estimate_mesh_potential_mean_diff(lattice_mid_grain0,1e-12)
+    estimate_mesh_potential_mean_diff(lattice_fine_grain0,1e-12)
+
+    estimate_mesh_potential_L2(lattice_low_grain1,1e-12)
+    estimate_mesh_potential_L2(lattice_mid_grain1,1e-12)
+    estimate_mesh_potential_L2(lattice_fine_grain1,1e-12)
+
+    ## testpointwise aggregate 
+
+    estimate_pointwise_potential_diff(lattice_low_grain2,1,.75,.75)
+    estimate_pointwise_potential_diff(lattice_mid_grain2,1,.75,.75)
+    estimate_pointwise_potential_diff(lattice_fine_grain2,1,.75,.75)
+
 
 end 
+
+main()

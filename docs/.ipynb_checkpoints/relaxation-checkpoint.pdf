@@ -621,7 +621,7 @@
    "id": "d0433132",
    "metadata": {},
    "source": [
-    "For 2) I coded an algorithm which repeats until  the percent difference of estimated potential at iteration t and iteration t+1 divided by value at t , so therefore (ϕ(t+1)-ϕ(t))/ϕ(t)* 100, reaches some threshold (percentage) For 1% error percent the potential was 0.38644332345770577<ϕ<0.4210577998019289. It seems that the aggregate error percentage \n"
+    "For 2) I coded an algorithm which repeats until  the percent difference of estimated potential at iteration t and iteration t+1 divided by value at t , so therefore (ϕ(t+1)-ϕ(t))/ϕ(t)* 100, reaches some threshold (percentage) For 1% error percent the potential was 0.38644332345770577<ϕ<0.4210577998019289.  \n"
    ]
   },
   {

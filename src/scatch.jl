@@ -80,7 +80,7 @@ function potential_meshgrid(L::Int,n_grids::Int,initial_potential::Number)
     #    nsquare=√n_grids
        incre=L/√n_grids
        lattice_grid=[y==L ? Node{Float64,Float64}(x,y,initial_potential,checkifedge(x,y,L)) : Node{Float64,Float64}(x,y,default_potential,checkifedge(x,y,L)) for x=0-incre:incre:L+incre,y=0-incre:incre:L+incre]
-       return Lattice{Int64,Float64,Float64}(L,n_grids,lattice_grid)
+       return Lattice{Float64,Int64,Float64}(L,n_grids,lattice_grid)
 
    else 
        error("Use integer which is a perfect square\n")
@@ -385,7 +385,7 @@ function animate_save(lattice::Lattice,n_frames::Int64,video_name::String, video
 
 end 
 
-function main(L::Number==1, ϕ::Number==1,ngrid::Number=16)
+function main(L::Number=1, ϕ::Number=1,ngrid::Number=16)
 
     ## initialize different meshes 
 
